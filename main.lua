@@ -16,13 +16,17 @@ local function calculate_required_fuel_for_mining(length, width, height, doStrip
     local fuelUsage = 0
 
     -- One vertical layer
-    fuelUsage = fuelUsage + ((width - 1) * (height - 1))
+    fuelUsage = fuelUsage + ((width - 1) * height) + ((height - 1) * width)
     -- If height not even, then one more movement of width-1
     if height % 2 == 1 then
         fuelUsage = fuelUsage + width - 1
     end
 
+    -- Going back down from the top of the tunnel
+    fuelUsage = fuelUsage + height - 1
+    -- Move forward one block
     fuelUsage = fuelUsage + 1
+    -- Repeat for the entire length
     fuelUsage = fuelUsage * length
 
     if doStripmining then
@@ -118,9 +122,7 @@ local function do_mining(boolean, doStripmining)
         end
         turtle.turnRight()
         for j = 0, height - 1 do
-            print("j = " .. j)
             for k = 0, width - 2 do
-                print("k = " .. k)
                 noMoreBlocks = false
                 while not noMoreBlocks do
                     if turtle.detect() then
