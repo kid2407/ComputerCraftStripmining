@@ -103,17 +103,68 @@ local function do_mining(boolean, doStripmining)
     local noMoreBlocks = false
     -- Mining part here
     for i = 1, length do
-        turtle.turnRight()
-        for i = 1, width do
+        if i > 1 then
             noMoreBlocks = false
             while not noMoreBlocks do
                 if turtle.detect() then
                     turtle.dig()
+                end
+                sleep(0.5)
+                if not turtle.detect() then
+                    noMoreBlocks = true
+                end
+            end
+            turtle.forward()
+        end
+        turtle.turnRight()
+        for j = 0, height - 1 do
+            print("j = " .. j)
+            for k = 0, width - 2 do
+                print("k = " .. k)
+                noMoreBlocks = false
+                while not noMoreBlocks do
+                    if turtle.detect() then
+                        turtle.dig()
+                    end
                     sleep(0.5)
                     if not turtle.detect() then
                         noMoreBlocks = true
                     end
                 end
+                turtle.forward()
+            end
+            if j ~= height - 1 then
+                turtle.turnRight()
+                turtle.turnRight()
+
+                noMoreBlocks = false
+                while not noMoreBlocks do
+                    if turtle.detectUp() then
+                        turtle.digUp()
+                    end
+                    sleep(0.5)
+                    if not turtle.detectUp() then
+                        noMoreBlocks = true
+                    end
+                end
+
+                turtle.up()
+            end
+        end
+        if height % 2 == 1 then
+            turtle.turnRight()
+            turtle.turnRight()
+            for l = 1, width - 1 do
+                turtle.forward()
+            end
+            turtle.turnRight()
+            for m = 1, height - 1 do
+                turtle.down()
+            end
+        else
+            turtle.turnRight()
+            for m = 1, height - 1 do
+                turtle.down()
             end
         end
     end
