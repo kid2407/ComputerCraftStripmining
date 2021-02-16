@@ -178,8 +178,6 @@ local function do_mining(length, width, height, doStripmining)
             end
             turtle.down()
         end
-        print("i = " .. i)
-        print("i % 3 = " .. (i % 3))
         -- Check if stripmining is active and the next tunnels should be made
         if doStripmining and i % 3 == 0 then
             do_stripmining(width)
