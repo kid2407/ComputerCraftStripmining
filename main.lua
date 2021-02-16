@@ -42,7 +42,152 @@ local function clear_terminal()
     term.setCursorPos(1, 1)
 end
 
-local function do_mining(boolean, doStripmining)
+local function dig_single_tunnel()
+    -- Lower layer
+    for i = 1, 5 do
+        while true do
+            if turtle.detect() then
+                turtle.dig()
+            end
+            sleep(0.5)
+            if not turtle.detect() then
+                turtle.forward()
+                break
+            end
+        end
+    end
+    -- Go up
+    while true do
+        if turtle.detectUp() then
+            turtle.digUp()
+        end
+        sleep(0.5)
+        if not turtle.detectUp() then
+            turtle.up()
+            break
+        end
+    end
+    turtle.turnRight()
+    turtle.turnRight()
+    -- And way back
+    for i = 1, 5 do
+        while true do
+            if turtle.detect() then
+                turtle.dig()
+            end
+            sleep(0.5)
+            if not turtle.detect() then
+                turtle.forward()
+                break
+            end
+        end
+    end
+    turtle.down()
+end
+
+local function do_stripmining(width)
+    turtle.turnLeft()
+    dig_single_tunnel()
+    for i = 1, width - 1 do
+        turtle.forward()
+    end
+    dig_single_tunnel()
+    for i = 1, width - 1 do
+        turtle.forward()
+    end
+    turtle.turnRight()
+end
+
+local function do_mining(length, width, height, doStripmining)
+    local noMoreBlocks = false
+    for i = 1, length do
+        if i > 1 then
+            noMoreBlocks = false
+            while not noMoreBlocks do
+                if turtle.detect() then
+                    turtle.dig()
+                end
+                sleep(0.5)
+                if not turtle.detect() then
+                    noMoreBlocks = true
+                end
+            end
+            turtle.forward()
+        end
+        turtle.turnRight()
+        for j = 0, height - 1 do
+            for k = 0, width - 2 do
+                noMoreBlocks = false
+                while not noMoreBlocks do
+                    if turtle.detect() then
+                        turtle.dig()
+                    end
+                    sleep(0.5)
+                    if not turtle.detect() then
+                        noMoreBlocks = true
+                    end
+                end
+                turtle.forward()
+            end
+            if j ~= height - 1 then
+                turtle.turnRight()
+                turtle.turnRight()
+
+                noMoreBlocks = false
+                while not noMoreBlocks do
+                    if turtle.detectUp() then
+                        turtle.digUp()
+                    end
+                    sleep(0.5)
+                    if not turtle.detectUp() then
+                        noMoreBlocks = true
+                    end
+                end
+
+                turtle.up()
+            end
+        end
+        if height % 2 == 1 then
+            turtle.turnRight()
+            turtle.turnRight()
+            for l = 1, width - 1 do
+                noMoreBlocks = false
+                while not noMoreBlocks do
+                    if turtle.detect() then
+                        turtle.dig()
+                    end
+                    sleep(0.5)
+                    if not turtle.detect() then
+                        noMoreBlocks = true
+                    end
+                end
+                turtle.forward()
+            end
+        end
+        turtle.turnRight()
+        for m = 1, height - 1 do
+            noMoreBlocks = false
+            while not noMoreBlocks do
+                if turtle.detectDown() then
+                    turtle.digDown()
+                end
+                sleep(0.5)
+                if not turtle.detectDown() then
+                    noMoreBlocks = true
+                end
+            end
+            turtle.down()
+        end
+        print("i = " .. i)
+        print("i % 3 = " .. (i % 3))
+        -- Check if stripmining is active and the next tunnels should be made
+        if doStripmining and i % 3 == 0 then
+            do_stripmining(width)
+        end
+    end
+end
+
+local function prepare_mining(doStripmining)
     clear_terminal()
     local input = nil
     local length = 3
@@ -104,82 +249,17 @@ local function do_mining(boolean, doStripmining)
         end
     end
     print("Ready to mine!")
-    local noMoreBlocks = false
-    -- Mining part here
-    for i = 1, length do
-        if i > 1 then
-            noMoreBlocks = false
-            while not noMoreBlocks do
-                if turtle.detect() then
-                    turtle.dig()
-                end
-                sleep(0.5)
-                if not turtle.detect() then
-                    noMoreBlocks = true
-                end
-            end
-            turtle.forward()
-        end
-        turtle.turnRight()
-        for j = 0, height - 1 do
-            for k = 0, width - 2 do
-                noMoreBlocks = false
-                while not noMoreBlocks do
-                    if turtle.detect() then
-                        turtle.dig()
-                    end
-                    sleep(0.5)
-                    if not turtle.detect() then
-                        noMoreBlocks = true
-                    end
-                end
-                turtle.forward()
-            end
-            if j ~= height - 1 then
-                turtle.turnRight()
-                turtle.turnRight()
-
-                noMoreBlocks = false
-                while not noMoreBlocks do
-                    if turtle.detectUp() then
-                        turtle.digUp()
-                    end
-                    sleep(0.5)
-                    if not turtle.detectUp() then
-                        noMoreBlocks = true
-                    end
-                end
-
-                turtle.up()
-            end
-        end
-        if height % 2 == 1 then
-            turtle.turnRight()
-            turtle.turnRight()
-            for l = 1, width - 1 do
-                turtle.forward()
-            end
-            turtle.turnRight()
-            for m = 1, height - 1 do
-                turtle.down()
-            end
-        else
-            turtle.turnRight()
-            for m = 1, height - 1 do
-                turtle.down()
-            end
-        end
-    end
+    do_mining(length, width, height, doStripmining)
 end
 
 -- Program to dig a straigth tunnel
 local function command_tunnel()
-    do_mining(false)
+    prepare_mining(false)
 end
 
 -- Program to do some stripmining
 local function command_stripmine()
-    do_mining(true)
+    prepare_mining(true)
 end
 
 while true do
