@@ -5,11 +5,28 @@ local function command_help()
     print("- stripmine: Do some stripmining with the specified parameters")
 end
 
+local whitelist = {"minecraft:torch", "ore", "diamond_ore"}
+
 print("Welcome to kid2407s mining program version 1.0.0!")
 command_help()
 
 local function isInteger(str)
     return not (str == "" or str:find("%D")) -- str:match("%D") also works
+end
+
+local function place_torch()
+    local itemData
+    for i = 1, 16 do
+        itemData = turtle.getItemDetail(i)
+        if itemData and itemData.name == "minecraft:torch" then
+            turtle.turnRight()
+            turtle.turnRight()
+            turtle.select(i)
+            turtle.place()
+            turtle.turnRight()
+            turtle.turnRight()
+        end
+    end
 end
 
 local function calculate_required_fuel_for_mining(length, width, height, doStripmining)
@@ -42,6 +59,62 @@ local function clear_terminal()
     term.setCursorPos(1, 1)
 end
 
+local function clean_inventory()
+    local details
+    local earlyReturn
+    for i = 1, 16 do
+        details = turtle.getItemDetail(i)
+        if details then
+            earlyReturn = false
+            for _, v in pairs(whitelist) do
+                if details.name:match(v) then
+                    earlyReturn = true
+                    break
+                end
+            end
+            if not earlyReturn then
+                turtle.select(i)
+                turtle.drop()
+            end
+        end
+    end
+    turtle.select(1)
+end
+
+local function mine_whitelisted_blocks()
+    local success, detectedBlock
+
+    for i = 1, 4 do
+        turtle.turnRight()
+        success, detectedBlock = turtle.inspect()
+        if success then
+            for _, v in pairs(whitelist) do
+                if detectedBlock.name:match(v) then
+                    turtle.dig()
+                end
+            end
+        end
+    end
+
+    success, detectedBlock = turtle.inspectDown()
+    if success then
+        for _, v in pairs(whitelist) do
+            if detectedBlock.name:match(v) then
+                turtle.digDown()
+            end
+        end
+    end
+
+    success, detectedBlock = turtle.inspectUp()
+    if success then
+        for _, v in pairs(whitelist) do
+            if detectedBlock.name:match(v) then
+                turtle.digUp()
+            end
+        end
+    end
+end
+
 local function dig_single_tunnel()
     -- Lower layer
     for i = 1, 5 do
@@ -55,6 +128,7 @@ local function dig_single_tunnel()
                 break
             end
         end
+        mine_whitelisted_blocks()
     end
     -- Go up
     while true do
@@ -67,6 +141,7 @@ local function dig_single_tunnel()
             break
         end
     end
+    mine_whitelisted_blocks()
     turtle.turnRight()
     turtle.turnRight()
     -- And way back
@@ -81,6 +156,7 @@ local function dig_single_tunnel()
                 break
             end
         end
+        mine_whitelisted_blocks()
     end
     turtle.down()
 end
@@ -98,7 +174,7 @@ local function do_stripmining(width)
     turtle.turnRight()
 end
 
-local function do_mining(length, width, height, doStripmining)
+local function do_mining(length, width, height, torchDistance, doStripmining)
     local noMoreBlocks = false
     for i = 1, length do
         if i > 1 then
@@ -113,6 +189,9 @@ local function do_mining(length, width, height, doStripmining)
                 end
             end
             turtle.forward()
+            if i % torchDistance == torchDistance - 1 then
+                place_torch()
+            end
         end
         turtle.turnRight()
         for j = 0, height - 1 do
@@ -178,9 +257,12 @@ local function do_mining(length, width, height, doStripmining)
             end
             turtle.down()
         end
-        -- Check if stripmining is active and the next tunnels should be made
-        if doStripmining and i % 3 == 0 then
-            do_stripmining(width)
+        if i % 3 == 0 then
+            clean_inventory()
+            -- Check if stripmining is active and the next tunnels should be made
+            if doStripmining then
+                do_stripmining(width)
+            end
         end
     end
 end
@@ -191,6 +273,7 @@ local function prepare_mining(doStripmining)
     local length = 3
     local width = 1
     local height = 2
+    local torchDistance = 5
 
     while true do
         print("Please enter a tunnel length:")
@@ -215,6 +298,15 @@ local function prepare_mining(doStripmining)
         input = io.read()
         if isInteger(input) then
             width = tonumber(input)
+            break
+        end
+    end
+
+    while true do
+        print("Please enter how far the torches should be placed:")
+        input = io.read()
+        if isInteger(input) then
+            torchDistance = tonumber(input)
             break
         end
     end
@@ -247,7 +339,7 @@ local function prepare_mining(doStripmining)
         end
     end
     print("Ready to mine!")
-    do_mining(length, width, height, doStripmining)
+    do_mining(length, width, height, torchDistance, doStripmining)
 end
 
 -- Program to dig a straigth tunnel
